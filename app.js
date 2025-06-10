@@ -7,6 +7,8 @@ const flash = require('connect-flash');
 const expressLayouts = require('express-ejs-layouts');
 const passport = require('passport');
 const { body, validationResult } = require('express-validator');
+const pgSession = require('connect-pg-simple')(session);
+const { pool } = require('./models/db');
 
 // Load environment variables
 dotenv.config();
@@ -25,14 +27,27 @@ app.set('layout', 'layouts/main');
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
 
-// Session setup
+// Serve static files with proper caching
+app.use(express.static(path.join(__dirname, 'public'), {
+  maxAge: '1d',
+  etag: true
+}));
+
+// Session setup with PostgreSQL store
 app.use(session({
+  store: new pgSession({
+    pool,
+    tableName: 'session'
+  }),
   secret: process.env.SESSION_SECRET || 'default_secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 60 * 60 * 1000 } // 1 hour
+  cookie: { 
+    maxAge: 60 * 60 * 1000, // 1 hour
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax'
+  }
 }));
 
 // Passport middleware
