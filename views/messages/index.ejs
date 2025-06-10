@@ -1,0 +1,35 @@
+<div class="row">
+  <div class="col-md-12">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h1>Messages</h1>
+      <a href="/messages/new" class="btn btn-primary">New Message</a>
+    </div>
+
+    <% if (messages.length > 0) { %>
+      <div class="list-group">
+        <% messages.forEach(message => { %>
+          <div class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1"><a href="/messages/<%= message.id %>"><%= message.title %></a></h5>
+              <small><%= new Date(message.timestamp).toLocaleString() %></small>
+            </div>
+            <p class="mb-1"><%= message.text.length > 200 ? message.text.substring(0, 200) + '...' : message.text %></p>
+            <div class="d-flex justify-content-between align-items-center">
+              <small>Posted by: <%= message.first_name %> <%= message.last_name %></small>
+              <% if (locals.user && (locals.user.id === message.user_id || locals.user.is_admin)) { %>
+                <div class="btn-group">
+                  <a href="/messages/<%= message.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+                  <form action="/messages/<%= message.id %>/delete" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to delete this message?')">Delete</button>
+                  </form>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <div class="alert alert-info">No messages found.</div>
+    <% } %>
+  </div>
+</div> 

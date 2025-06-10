@@ -1,0 +1,26 @@
+<div class="row">
+  <div class="col-md-8 mx-auto">
+    <div class="card">
+      <div class="card-header">
+        <h3><%= message.title %></h3>
+        <div class="text-muted">
+          <small>Posted by: <%= message.first_name %> <%= message.last_name %> on <%= new Date(message.timestamp).toLocaleString() %></small>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="card-text"><%= message.text %></p>
+      </div>
+      <div class="card-footer">
+        <div class="d-flex gap-2">
+          <a href="/messages" class="btn btn-secondary">Back to Messages</a>
+          <% if (locals.user && (locals.user.id === message.user_id || locals.user.is_admin)) { %>
+            <a href="/messages/<%= message.id %>/edit" class="btn btn-primary">Edit</a>
+            <form action="/messages/<%= message.id %>/delete" method="POST" class="d-inline">
+              <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this message?')">Delete</button>
+            </form>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div> 

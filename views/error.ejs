@@ -1,0 +1,18 @@
+<div class="row">
+  <div class="col-md-8 mx-auto">
+    <div class="card text-center">
+      <div class="card-header bg-danger text-white">
+        <h3>Error</h3>
+      </div>
+      <div class="card-body">
+        <h5 class="card-title"><%= message %></h5>
+        <% if (process.env.NODE_ENV === 'development' && error.stack) { %>
+          <div class="alert alert-danger mt-4">
+            <pre><%= error.stack %></pre>
+          </div>
+        <% } %>
+        <a href="/" class="btn btn-primary mt-3">Go Home</a>
+      </div>
+    </div>
+  </div>
+</div> 
