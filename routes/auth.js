@@ -2,6 +2,24 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
 
+// Middleware to check if user is authenticated
+const isAuthenticated = (req, res, next) => {
+  if (req.session.user) {
+    return next();
+  }
+  req.flash('error_msg', 'Please log in to view this resource');
+  res.redirect('/auth/login');
+};
+
+// Middleware to check if user is admin
+const isAdmin = (req, res, next) => {
+  if (req.session.user && req.session.user.is_admin) {
+    return next();
+  }
+  req.flash('error_msg', 'Access denied. Admin privileges required');
+  res.redirect('/');
+};
+
 // Login page - GET
 router.get('/login', (req, res) => {
   if (req.session.user) {
@@ -106,27 +124,9 @@ router.get('/logout', (req, res) => {
   });
 });
 
-// Middleware to check if user is authenticated
-const isAuthenticated = (req, res, next) => {
-  if (req.session.user) {
-    return next();
-  }
-  req.flash('error_msg', 'Please log in to view this resource');
-  res.redirect('/auth/login');
-};
-
-// Middleware to check if user is admin
-const isAdmin = (req, res, next) => {
-  if (req.session.user && req.session.user.is_admin) {
-    return next();
-  }
-  req.flash('error_msg', 'Access denied. Admin privileges required');
-  res.redirect('/');
-};
-
 // Export middleware for use in other routes
-module.exports.isAuthenticated = isAuthenticated;
-module.exports.isAdmin = isAdmin;
-
-// Export the router
-module.exports = router; 
+module.exports = {
+  router,
+  isAuthenticated,
+  isAdmin
+}; 
