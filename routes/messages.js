@@ -6,7 +6,7 @@ const { isAuthenticated, isAdmin } = require('./auth');
 // Get all messages - only for members
 router.get('/', isAuthenticated, async (req, res) => {
   try {
-    if (!req.session.user.is_member) {
+    if (!req.user.is_member) {
       req.flash('error_msg', 'You must be a member to view messages');
       return res.redirect('/');
     }
@@ -40,7 +40,7 @@ router.post('/', isAuthenticated, async (req, res) => {
     }
     
     // Create message
-    await Message.create(title, text, req.session.user.id);
+    await Message.create(title, text, req.user.id);
     
     req.flash('success_msg', 'Message created successfully');
     res.redirect('/messages');
@@ -54,7 +54,7 @@ router.post('/', isAuthenticated, async (req, res) => {
 // Get a single message
 router.get('/:id', isAuthenticated, async (req, res) => {
   try {
-    if (!req.session.user.is_member) {
+    if (!req.user.is_member) {
       req.flash('error_msg', 'You must be a member to view messages');
       return res.redirect('/');
     }
@@ -88,7 +88,7 @@ router.get('/:id/edit', isAuthenticated, async (req, res) => {
     }
     
     // Check if user is the author or an admin
-    if (message.user_id !== req.session.user.id && !req.session.user.is_admin) {
+    if (message.user_id !== req.user.id && !req.user.is_admin) {
       req.flash('error_msg', 'You are not authorized to edit this message');
       return res.redirect('/messages');
     }
@@ -123,7 +123,7 @@ router.post('/:id', isAuthenticated, async (req, res) => {
     }
     
     // Check if user is the author or an admin
-    if (message.user_id !== req.session.user.id && !req.session.user.is_admin) {
+    if (message.user_id !== req.user.id && !req.user.is_admin) {
       req.flash('error_msg', 'You are not authorized to edit this message');
       return res.redirect('/messages');
     }
@@ -151,7 +151,7 @@ router.post('/:id/delete', isAuthenticated, async (req, res) => {
     }
     
     // Check if user is the author or an admin
-    if (message.user_id !== req.session.user.id && !req.session.user.is_admin) {
+    if (message.user_id !== req.user.id && !req.user.is_admin) {
       req.flash('error_msg', 'You are not authorized to delete this message');
       return res.redirect('/messages');
     }
