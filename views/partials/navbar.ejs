@@ -19,6 +19,11 @@
         <% } %>
       </ul>
       <ul class="navbar-nav">
+        <li class="nav-item">
+          <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+            <i class="fas fa-sun"></i>
+          </button>
+        </li>
         <% if (locals.user) { %>
           <% if (!locals.user.is_member) { %>
             <li class="nav-item">
