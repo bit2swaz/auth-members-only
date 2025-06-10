@@ -2,18 +2,18 @@ const db = require('./db');
 const bcrypt = require('bcrypt');
 
 class User {
-  static async create(firstName, lastName, email, password) {
+  static async create(firstName, lastName, email, password, isAdmin = false) {
     try {
       // Hash password
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(password, salt);
 
       const query = `
-        INSERT INTO users (first_name, last_name, email, password)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO users (first_name, last_name, email, password, is_admin)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING id, first_name, last_name, email, is_member, is_admin
       `;
-      const values = [firstName, lastName, email, hashedPassword];
+      const values = [firstName, lastName, email, hashedPassword, isAdmin];
       const result = await db.query(query, values);
       return result.rows[0];
     } catch (error) {
