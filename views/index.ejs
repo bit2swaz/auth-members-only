@@ -12,10 +12,14 @@
         </div>
       <% } else if (!locals.user.is_member) { %>
         <p>You're logged in, but you need to be a member to see all content.</p>
-        <p>Contact an admin to get member privileges.</p>
+        <p>Enter the secret passcode to join the club!</p>
+        <a href="/auth/join-club" class="btn btn-primary">Join Club</a>
       <% } else { %>
         <p>You're a member! You can view and post messages.</p>
-        <a href="/messages" class="btn btn-primary">View Messages</a>
+        <div class="d-flex gap-2">
+          <a href="/messages" class="btn btn-primary">View Messages</a>
+          <a href="/messages/new" class="btn btn-success">New Message</a>
+        </div>
       <% } %>
     </div>
   </div>

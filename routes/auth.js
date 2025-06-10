@@ -97,11 +97,19 @@ router.post('/join-club', isAuthenticated, [
 ], async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.render('auth/join-club', { title: 'Join Club', errors: errors.array() });
+    return res.render('auth/join-club', { 
+      title: 'Join Club', 
+      errors: errors.array(),
+      oldInput: req.body
+    });
   }
 
   try {
-    await User.update(req.user.id, { isMember: true });
+    const updatedUser = await User.update(req.user.id, { is_member: true });
+    
+    // Update the user object in the session
+    req.user.is_member = true;
+    
     req.flash('success_msg', 'You are now a member!');
     res.redirect('/');
   } catch (error) {
