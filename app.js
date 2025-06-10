@@ -8,7 +8,7 @@ const expressLayouts = require('express-ejs-layouts');
 const passport = require('passport');
 const { body, validationResult } = require('express-validator');
 const pgSession = require('connect-pg-simple')(session);
-const { pool } = require('./models/db');
+const { pool, testConnection } = require('./models/db');
 
 // Load environment variables
 dotenv.config();
@@ -88,9 +88,26 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Start server only after database connection is established
+const startServer = async () => {
+  try {
+    // Test database connection
+    const isConnected = await testConnection();
+    if (!isConnected) {
+      console.error('Failed to connect to database. Exiting...');
+      process.exit(1);
+    }
+
+    // Start the server
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Error starting server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 module.exports = app; 
