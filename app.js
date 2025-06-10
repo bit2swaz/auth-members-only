@@ -39,6 +39,9 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
+// Passport configuration
+require('./config/passport')(passport);
+
 // Flash messages
 app.use(flash());
 
