@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
+const passport = require('passport');
+const { body, validationResult } = require('express-validator');
 
 // Middleware to check if user is authenticated
 const isAuthenticated = (req, res, next) => {
-  if (req.session.user) {
+  if (req.isAuthenticated()) {
     return next();
   }
   req.flash('error_msg', 'Please log in to view this resource');
@@ -13,7 +15,7 @@ const isAuthenticated = (req, res, next) => {
 
 // Middleware to check if user is admin
 const isAdmin = (req, res, next) => {
-  if (req.session.user && req.session.user.is_admin) {
+  if (req.isAuthenticated() && req.user.is_admin) {
     return next();
   }
   req.flash('error_msg', 'Access denied. Admin privileges required');
@@ -22,77 +24,47 @@ const isAdmin = (req, res, next) => {
 
 // Login page - GET
 router.get('/login', (req, res) => {
-  if (req.session.user) {
+  if (req.isAuthenticated()) {
     return res.redirect('/');
   }
   res.render('auth/login', { title: 'Login' });
 });
 
 // Login - POST
-router.post('/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Validate input
-    if (!email || !password) {
-      req.flash('error_msg', 'Please enter all fields');
-      return res.redirect('/auth/login');
-    }
-
-    // Authenticate user
-    const user = await User.authenticate(email, password);
-    if (!user) {
-      req.flash('error_msg', 'Invalid email or password');
-      return res.redirect('/auth/login');
-    }
-
-    // Set session
-    req.session.user = {
-      id: user.id,
-      firstName: user.first_name,
-      lastName: user.last_name,
-      email: user.email,
-      is_member: user.is_member,
-      is_admin: user.is_admin
-    };
-
-    req.flash('success_msg', 'You are now logged in');
-    res.redirect('/');
-  } catch (error) {
-    console.error('Login error:', error);
-    req.flash('error_msg', 'An error occurred during login');
-    res.redirect('/auth/login');
-  }
-});
+router.post('/login', passport.authenticate('local', {
+  successRedirect: '/',
+  failureRedirect: '/auth/login',
+  failureFlash: true
+}));
 
 // Register page - GET
 router.get('/register', (req, res) => {
-  if (req.session.user) {
+  if (req.isAuthenticated()) {
     return res.redirect('/');
   }
   res.render('auth/register', { title: 'Register' });
 });
 
 // Register - POST
-router.post('/register', async (req, res) => {
+router.post('/register', [
+  body('firstName').trim().notEmpty().withMessage('First name is required'),
+  body('lastName').trim().notEmpty().withMessage('Last name is required'),
+  body('email').isEmail().withMessage('Please enter a valid email'),
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('confirmPassword').custom((value, { req }) => {
+    if (value !== req.body.password) {
+      throw new Error('Passwords do not match');
+    }
+    return true;
+  })
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.render('auth/register', { title: 'Register', errors: errors.array() });
+  }
+
   try {
-    const { firstName, lastName, email, password, confirmPassword } = req.body;
-
-    // Validate input
-    if (!firstName || !lastName || !email || !password || !confirmPassword) {
-      req.flash('error_msg', 'Please enter all fields');
-      return res.redirect('/auth/register');
-    }
-
-    if (password !== confirmPassword) {
-      req.flash('error_msg', 'Passwords do not match');
-      return res.redirect('/auth/register');
-    }
-
-    if (password.length < 6) {
-      req.flash('error_msg', 'Password must be at least 6 characters');
-      return res.redirect('/auth/register');
-    }
+    const { firstName, lastName, email, password } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findByEmail(email);
@@ -113,9 +85,34 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// Join Club page - GET
+router.get('/join-club', isAuthenticated, (req, res) => {
+  res.render('auth/join-club', { title: 'Join Club' });
+});
+
+// Join Club - POST
+router.post('/join-club', isAuthenticated, [
+  body('passcode').equals(process.env.SECRET_PASSCODE).withMessage('Invalid passcode')
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.render('auth/join-club', { title: 'Join Club', errors: errors.array() });
+  }
+
+  try {
+    await User.update(req.user.id, { isMember: true });
+    req.flash('success_msg', 'You are now a member!');
+    res.redirect('/');
+  } catch (error) {
+    console.error('Join club error:', error);
+    req.flash('error_msg', 'An error occurred while joining the club');
+    res.redirect('/auth/join-club');
+  }
+});
+
 // Logout
 router.get('/logout', (req, res) => {
-  req.session.destroy((err) => {
+  req.logout((err) => {
     if (err) {
       console.error('Logout error:', err);
       return res.redirect('/');
@@ -124,7 +121,6 @@ router.get('/logout', (req, res) => {
   });
 });
 
-// Export middleware for use in other routes
 module.exports = {
   router,
   isAuthenticated,
