@@ -1,4 +1,6 @@
 {
+  "require": {"dotenv": "^16.5.0"},
+  
   "name": "auth-members-only",
   "version": "1.0.0",
   "description": "",
